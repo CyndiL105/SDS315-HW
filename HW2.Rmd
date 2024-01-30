@@ -18,8 +18,6 @@ library(dplyr)
 library(ggplot2)
 ```
 
-Github link: https://github.com/CyndiL105/SDS315-HW2/blob/00b15917e95657ab03f3c37515f572a33ffbf24d/HW2.Rmd
-
 ## Question 1 
 ```{r echo = FALSE}
 ggplot(profs, aes(x=eval)) + geom_histogram(fill = "darkseagreen2", col = "black",bins = 30) + ggtitle("Distribution of Course Evaluation Scores") + xlab("Score (out of 5)")
