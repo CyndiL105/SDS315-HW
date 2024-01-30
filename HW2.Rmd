@@ -1,7 +1,7 @@
 ---
 title: "HW2_SDS315"
 author: "Cyndi Liang"
-date: "2024-01-29"
+date: "2024-01-26"
 output:
   html_document:
     df_print: paged
@@ -17,7 +17,6 @@ profs = read.csv("profs.csv")
 library(dplyr)
 library(ggplot2)
 ```
-UT EID: Cll3498
 
 Github link: https://github.com/CyndiL105/SDS315-HW2/blob/00b15917e95657ab03f3c37515f572a33ffbf24d/HW2.Rmd
 
