@@ -52,6 +52,7 @@ C) The 40 year old has a healthier creatinine clearance rate for their age. I de
 ```{r echo = FALSE}
 market = read.csv("marketmodel.csv")
 
+#find lm models for each individual stock in terms of SPY
 AAPL_model <- lm(AAPL ~ SPY, data = market)
 AAPL12 = coefficients(AAPL_model)
 
@@ -70,6 +71,7 @@ WMT12 = coefficients(WMT_model)
 TGT_model <- lm(TGT ~ SPY, data = market)
 TGT12 = coefficients(TGT_model)
 
+#find r squared value
 AAPL = summary(AAPL_model)
 AAPL3 = AAPL$r.squared
 
@@ -129,7 +131,7 @@ spain_double_time = 70/0.2762447
 In Italy, the estimated growth rate was 0.183 and the doubling rate was 382 days. In Spain, the estimated growth rate was 0.276, and the doubling rate was 253 days 
 
 ```{r echo = FALSE}
-ggplot(covid, aes(x=days_since_first_death, y = log(deaths), color = country)) + geom_line() + ggtitle("Covid Deaths Overtime in Spain and Italy") + xlab("Days Since first Death") + ylab("Number of Deaths (logarithmic scale")
+ggplot(covid, aes(x=days_since_first_death, y = log(deaths), color = country)) + geom_line() + ggtitle("Covid Deaths Overtime in Spain and Italy") + xlab("Days Since first Death") + ylab("Number of Deaths (logarithmic scale"))
 ```
 
 The line graph displays the death rate due to covid across time for both Italy and Spain. 
