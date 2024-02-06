@@ -1,0 +1,147 @@
+---
+title: "HW3_Statistical_Thinking"
+author: "Cyndi Liang"
+date: "2024-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, include = FALSE}
+creatinine = read.csv("creatinine.csv")
+library(tibble)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+```
+
+## Question 1 
+```{r echo = FALSE, include = FALSE}
+
+# find the equation of the linear regression model
+creatinine_model <- lm(creatclear ~ age, data = creatinine)
+coefficients(creatinine_model)
+
+creatrate55 = 147.8129158 - 0.6198159*55
+creatrate55
+
+creatrate40 = 147.8129158 - 0.6198159*40
+creatrate40
+
+creatrate60 = 147.8129158 - 0.6198159*60
+creatrate60
+
+# find corresponding differences between sample creatinine clearance rate and predicted 
+sample40 = 135 
+sample60 = 112
+
+difference40 = sample40 - creatrate40
+difference40
+difference60 = sample60 - creatrate60 
+difference60
+```
+A) The expected creatinine clearance rate for a 55 year old is 113.723 mL/minute. I determined this by finding the equation of the linear regression model of the data. This was y = -0.6198159 + 147.8129158*x, where y is the creatinine clearance rate in mL/minute and x is age in years. I then plugged in the age 55 to find the expected rate. 
+
+B) The creatinine clearance rate changes by -0.6198159 mL/minute for every increase in age (by year). I determined this by finding the slope of the linear regression model of the data. 
+
+C) The 40 year old has a healthier creatinine clearance rate for their age. I determined this by calculating the expected clearance rate for their age group according to the linear regression model (y = -0.6198159 + 147.8129158*x), then subtracting that value from the sample rate given in the problem. It was found that the 40 year old had a clearance rate 11.980 mL/minute higher than their age group, while the 60 year odl had a clearance rate 1.376 mL/minute higher. Hence, the 40 year old, who had a much higher difference had the healthier rate. 
+
+## Question 2 
+```{r echo = FALSE}
+market = read.csv("marketmodel.csv")
+
+AAPL_model <- lm(AAPL ~ SPY, data = market)
+AAPL12 = coefficients(AAPL_model)
+
+GOOG_model <- lm(GOOG ~ SPY, data = market)
+GOOG12 = coefficients(GOOG_model)
+
+MRK_model <- lm(MRK ~ SPY, data = market)
+MRK12 = coefficients(MRK_model)
+
+JNJ_model <- lm(JNJ ~ SPY, data = market)
+JNJ12 = coefficients(JNJ_model)
+
+WMT_model <- lm(WMT ~ SPY, data = market)
+WMT12 = coefficients(WMT_model)
+
+TGT_model <- lm(TGT ~ SPY, data = market)
+TGT12 = coefficients(TGT_model)
+
+AAPL = summary(AAPL_model)
+AAPL3 = AAPL$r.squared
+
+GOOG = summary(GOOG_model)
+GOOG3 = GOOG$r.squared
+
+MRK = summary(MRK_model)
+MRK3 = MRK$r.squared
+
+JNJ = summary(JNJ_model)
+JNJ3 = JNJ$r.squared
+
+WMT = summary(WMT_model)
+WMT3 = WMT$r.squared
+
+TGT = summary(TGT_model)
+TGT3 = TGT$r.squared
+
+market_table <- tibble(
+  Ticker_Symbol = c("AAPL", "GOOG", "MRK", "JNJ", "WMT", "TGT"),
+  Intercept =  c(AAPL12[1], GOOG12[1], MRK12[1], JNJ12[1], WMT12[1], TGT12[1]),
+  Slope = c(AAPL12[2], GOOG12[2], MRK12[2], JNJ12[2], WMT12[2], TGT12[2]),
+  Rsquared = c(AAPL3, GOOG3, MRK3, JNJ3, WMT3, TGT3)
+)
+
+pretty_market_table <- kable(market_table, "html") %>%
+  kable_styling(full_width = FALSE)
+
+```
+The beta of a stock is a measure of how much the overall market effects the price of that individual stock. A beta of 1 means that the stock changes the average amount, while a number above 1 means it's especially influenced by the overall market, and a number below 1 means the market generally has a smaller impact on that stock on average. Additionally, if the number is negative, it means that when the market is doing well the value of the stock goes down. These kinda of stocks can be a good "insurance" since they do well when the market goes down. 
+
+You can calculate the beta of a stock by dividing the daily return of an individual stock by the daily return of the overall market. Then take those numbers and find the average over that period of time. 
+
+```{r echo = FALSE}
+pretty_market_table
+```
+
+The table above displays the names of different company stocks (by ticker symbol), and the intercept, slope, and r squared of the linear regression models of the daily returns of each individual stock in relation to the daily return of the overall market (represented by SPY). 
+
+The WMT stocks had the lowest systematic risk with a beta of 0.519. The AAPL stock on the other hand had the highest systematic risk with a beta of 1.066. 
+
+## Question 3
+```{r echo = FALSE, include = FALSE}
+covid = read.csv("covid.csv")
+covid_italy = covid[covid$country == "Italy",]
+covid_spain = covid[covid$country == "Spain",]
+
+italy_model <- lm(log(deaths) ~ days_since_first_death, data = covid_italy)
+coefficients(italy_model)
+spain_model <- lm(log(deaths) ~ days_since_first_death, data = covid_spain)
+coefficients(spain_model)
+
+italy_double_time = 70/0.183218 
+spain_double_time = 70/0.2762447 
+
+```
+In Italy, the estimated growth rate was 0.183 and the doubling rate was 382 days. In Spain, the estimated growth rate was 0.276, and the doubling rate was 253 days 
+
+```{r echo = FALSE}
+ggplot(covid, aes(x=days_since_first_death, y = log(deaths), color = country)) + geom_line() + ggtitle("Covid Deaths Overtime in Spain and Italy") + xlab("Days Since first Death") + ylab("Number of Deaths (logarithmic scale")
+```
+
+The line graph displays the death rate due to covid across time for both Italy and Spain. 
+
+## Question 4
+```{r echo = FALSE, include = FALSE}
+milk = read.csv("milk.csv")
+milk_model = lm(log(sales) ~ log(price), data=milk)
+coefficients(milk_model)
+```
+
+The estimated price elasticity of milk is -1.619. I coded for the linear regression model of log(price) as the independent variable and log(sales) as the dependent variable. Since I used the logarithm of both, I could find the elasticity equation through power law. Then I took the coefficients function of the model to find the slope, which when the linear equation is converted to power law equation, is the price elasticity (what x is the power to). 
+
+
+
