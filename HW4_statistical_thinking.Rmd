@@ -1,0 +1,171 @@
+---
+title: "HW4"
+author: "Cyndi Liang"
+date: "2024-02-19"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r echo = FALSE, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(mosaic)
+gas = read.csv("gasprices.csv")
+```
+
+# Question 1 
+
+Claim: Gas stations charge more if they lack direct competition in sight.
+
+Evidence: The difference in mean price between gas stations with competition and without competition was -0.023 dollars according to the data set. The confidence interval lies between -0.055 ad 0.008 with 95% confidence, meaning it's statistically insignificant because it includes zero. 
+```{r echo = FALSE, include = FALSE}
+diffmean(Price ~ Competitors, data=gas)
+boot_gas_competitor = do(10000)*diffmean(Price ~ Competitors, data=mosaic::resample(gas))
+confint(boot_gas_competitor, level = 0.95)
+```
+Conclusion: The theory is unsupported by the evidence since the confidence interval includes the number zero, indicating that the difference is not statistically significant. Therefore direct competition does not effect pricing. 
+
+Claim: The richer the area, the higher the gas prices.
+```{r echo = FALSE, include = FALSE}
+gas_model <- lm(Price ~ Income, data = gas)
+coefficients(gas_model)
+
+boot_gas_income = do(10000)*lm(Price ~ Income, data=mosaic::resample(gas))
+confint(boot_gas_income, level = 0.95)
+```
+Evidence: After plotting the price against income, it shows a slight upward slope. The best guess slope is 1.248e-06 dollars in gas price per 1 dollar increase in average income according to the data set. It has a confidence interval of 6.598e-07 to 1.766e-06 with 95% confidence, it is statistically significant as it does not include zero. 
+```{r echo = FALSE}
+ggplot(gas) + geom_jitter(aes(x=Income, y=Price), alpha=0.1) + ggtitle("Zip Code Income in Relation to Gas Price") + xlab("Income ($)") + ylab("Price ($)")
+```
+
+The graph above plots the average zip code income against the gas prices in that. 
+
+Conclusion: This claim holds true since the slope on average is positive, and the confidence interval is  statistically significant and that there is a general increase in gas price as income increases. The bootstrap estimate was that price increased by 8.511e-07 of a dollar for each increase in average income, on the other hand in the original data set it was by 1.248e-06. 
+
+
+Claim: Gas stations at stoplights charge more.
+```{r echo = FALSE, include = FALSE}
+diffmean(Price ~ Stoplight, data=gas)
+boot_gas_stoplight = do(10000)*diffmean(Price ~ Stoplight, data=mosaic::resample(gas))
+confint(boot_gas_stoplight, level = 0.95)
+```
+Evidence: The best guess difference in mean price between gas stations with stoplights and without stoplights was -0.003 according to the data. The confidence interval lies between -0.039 and 0.031 with 95% confidence, it is statistcally insignificant. 
+
+Conclusion: The theory is unsupported by the evidence since the difference is not statistically significant in the confidence interval. 
+
+
+Claim: Gas stations with direct highway access charge more.
+```{r echo = FALSE, include = FALSE}
+diffmean(Price ~ Highway, data=gas)
+boot_gas_highway = do(10000)*diffmean(Price ~ Highway, data=mosaic::resample(gas))
+confint(boot_gas_highway, level = 0.95)
+
+mean(Price ~ Highway, data=gas)
+```
+Evidence: The best guess for the difference in mean price between gas stations with highways and without direct highways was 0.0457 according to the data set. However, the confidence interval indicates that the difference in mean price is between 0.009 and 0.082 with 95% confidence, this is statistically significant as zero is not in the interval. 
+
+Conclusion: The theory is supported by the evidence since the difference is statistically significant. Hence, gas stations with direct highway did charge more, typically by 0.046 of a dollar more in the data set. 
+
+Claim: Shell charges more than all other non-Shell brands.
+```{r echo = FALSE, include = FALSE}
+gas = mutate(gas, is_shell = ifelse(Name == "Shell", TRUE, FALSE))
+
+diffmean(Price ~ is_shell, data=gas)
+boot_gas_shell = do(10000)*diffmean(Price ~ is_shell, data=mosaic::resample(gas))
+confint(boot_gas_shell, level = 0.95)
+```
+Evidence: The best guess for the difference in mean price between gas stations that are shell and not shell was 0.027 according to the data set. However, the confidence interval indicates that the difference in mean price is between -0.009 and 0.066 with 95% confidence, this is not statistcally significant as the interval includes the number zero. 
+
+Conclusion: The theory is not supported by the evidence since the difference is not statistically significant. Hence, shell gas stations can't be proven with certainty to charge more. 
+
+# Question 2
+```{r echo = FALSE, include = FALSE}
+cars = read.csv("sclass.csv")
+car_a = filter(cars, cars$year == 2011, cars$trim == "63 AMG")
+car_b = filter(cars, cars$year == 2014, cars$trim == "550")
+
+boot_car_a = do(10000)*mean(~mileage, data=mosaic::resample(car_a))
+confint(boot_car_a, level = 0.95)
+
+car_b <- mutate(car_b, is_black = ifelse(color == "Black", TRUE, FALSE))
+prop(~is_black, data=car_b)
+boot_car_b = do(10000)*prop(~is_black, data=mosaic::resample(car_b))
+confint(boot_car_b, level = 0.95)
+
+```
+The 95% confidence interval for the average mileage of a 2011 car with 63 AMG is 26318.43 to 31827.11. 
+
+The proportion of 2014 cars with 550 AMG that are painted black has a confidence interval of 0.417 to 0.453 with 95% confidence. 
+
+# Question 3
+```{r echo = FALSE, include = FALSE}
+nbc = read.csv("nbc_pilotsurvey.csv")
+```
+```{r echo = FALSE, include = FALSE}
+edearl = filter(nbc, nbc$Show == "Living with Ed" | nbc$Show == "My Name is Earl")
+
+diffmean(Q1_Happy ~ Show, data=edearl)
+boot_edearl = do(10000)*diffmean(Q1_Happy ~ Show, data=mosaic::resample(edearl))
+confint(boot_edearl, level = 0.95)
+
+mean(Q1_Happy ~ Show, data=edearl)
+```
+Question: Between the shows "Living with Ed" and "My Name is Earl", can we say with certainty that one of them is surveyed to make viewers happier?
+
+Approach: Firstly I created a separate data set using the filter function for survey results only about the two shows in question. Then I found the difference in mean between those two shows in that data set using the diffmean function. Then I bootstrapped the data using the mosaic library for 10,000 simulations to find the average difference in mean as well as the 95% confidence interval using confint to determine whether the difference is statistically significant. I also took the individual means to determine which way the original difference was leaning towards. 
+
+Results: The difference in mean for happy scores was -0.149 with Living with Ed having a slightly higher mean score. However, the 95% confidence confidence interval was -0.396 and 0.100.
+
+Conclusion: In conclusion, since 0 is included in the confidence interval we can't conclude with certainty that one show made people happier; the difference found in the original data was not statistically significant. 
+
+
+```{r echo = FALSE, include = FALSE}
+loserla = filter(nbc, nbc$Show == "The Biggest Loser" | nbc$Show == "The Apprentice: Los Angeles")
+
+diffmean(Q1_Annoyed ~ Show, data=loserla)
+boot_loserla = do(10000)*diffmean(Q1_Annoyed ~ Show, data=mosaic::resample(loserla))
+confint(boot_loserla, level = 0.95)
+
+mean(Q1_Annoyed ~ Show, data=loserla)
+```
+Question: Between the shows "The Biggest Losser" and "The Apprentice: Los Angeles", can we say with certainty that one of them is surveyed to make viewers more annoyed?
+
+Approach: Firstly I created a separate data set using the filter function for survey results only about the two shows in question. Then I found the difference in mean between those two shows in that data set using the diffmean function. Then I bootstrapped the data using the mosaic library for 10,000 simulations to find the average difference in mean as well as the 95% confidence interval using confint to determine whether the difference is statistically significant. I also took the individual means to determine which way the original difference was leaning towards. 
+
+Results: The difference in mean for happy scores was -0.271 with The Apprentice: Los Angeles having a slightly higher mean score. The confidence interval was -0.521 and -0.020 with 95% confidence. 
+Conclusion: In conclusion, since 0 is not included in the confidence interval, the difference is statistically significant, and we can say with certainty that The Apprentice: Los Angeles consistently makes people more annoyed than the other show. 
+
+
+```{r echo = FALSE, include = FALSE}
+stars = filter(nbc, nbc$Show == "Dancing with the Stars")
+stars <- mutate(stars, confusion_rating = ifelse(Q2_Confusing == 4 | Q2_Confusing == 5, "High", "Low"))
+prop(~confusion_rating, data=stars)
+boot_stars = do(10000)*prop(~confusion_rating, data=mosaic::resample(stars))
+confint(boot_stars, level = 0.95)
+
+```
+Question: What is the proportion of viewers expected to be highly confused by the show "Dancing with the Stars"?
+
+Approach: Firstly I'll create a dataset with survey data only for "Dancing with the Stars". I'll add a column that labels each entry as high or low depending on whether or not the confusion rate was 4 or higher. Then I found the proportion of high entries in the data using the prop() function. Then I bootstrapped with 10,000 samples and found the confidence interval with the confint() and prop() function. 
+
+Results: The proportion according to the data given was 7.735% high confusion ratings. The confidence interval was 3.867 to 11.602 percent with a confidence of 95%. According to the 10,000 bootstrapped sample 9.392% surveyed high levels of confusion. 
+
+Conclusion: The confidence interval didn't include zero, therefore the proportion of survey entries that entered high annoyance was statistically significant. This can be estimated as 9.392% of entries for Dancing with the Stars with 95% confidence. 
+
+# Question 4
+```{r echo = FALSE, include = FALSE}
+ebay = read.csv("ebay.csv")
+diffmean(rev_ratio ~ adwords_pause, data=ebay)
+boot_ebay = do(10000)*diffmean(rev_ratio ~ adwords_pause, data=mosaic::resample(ebay))
+confint(boot_ebay, level = 0.95)
+
+mean(rev_ratio ~ adwords_pause, data=ebay)
+```
+Question: Does paid search advertising on Google consistently increase revenue for Ebay? 
+
+Approach: Firstly I used diffmean() to find the difference in average revenue ratios within the data given between control and treatment group. Then I used the mosaic library and diffmean() to bootstrap with 10,000 samples and used confint() to find the confidence interval as well as estimate with those samples to 95% confidence. 
+
+Results: The initial difference in average revenue ratio -0.052 with the control group having the higher average revenue ratio. Using the bootstrapped data, the confidence interval was found to be -0.091 to -0.013 at 95% confidence. 
+
+Conclusion: Since 0 is not included in the 95% confidence interval, that means the difference in average revenue ratio was significant between control and treatment groups. The difference was found to be -0.041 with 95% confidence (control group was the higher value), and allows us to deduce that paid search advertising did increase Ebay revenue. 
