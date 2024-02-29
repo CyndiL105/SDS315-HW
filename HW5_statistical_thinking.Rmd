@@ -1,0 +1,134 @@
+---
+title: "HW5_statistical"
+author: "Cyndi Liang"
+date: "2024-02-25"
+output: html_document
+---
+
+EID: 
+
+Github Link: 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, include = FALSE}
+library(tidyverse)
+library(mosaic)
+library(stringr)
+library(tibble)
+library(knitr)
+```
+
+# Question 1 
+```{r echo = FALSE}
+iron_sim = do(100000)*nflip(n=2021, prob = 0.024)
+ggplot(iron_sim) + geom_histogram(aes(x=nflip), binwidth=1) + ggtitle("Distribution of Flagged Trades Simulation") + xlab("Number of Flagged Trades") + ylab("count")
+iron_sum = sum(iron_sim >=70)
+iron_p = iron_sum/100000
+```
+
+The histogram above displays the distribution of trades that were flagged out of 2021 total at a 2.4% probability with 100,000 monte carlo simulations. 
+
+Null hypothesis: Iron Bank securities were flagged at the same 2.4% baseline rate than other traders. 
+
+The test statistic was the number of trades that got flagged. The p-value is 0.00201. I don't believe the null hypothesis was plausible, as a probability of 0.201 % of having 70 or more trades flagged is way too low and seems significant in the context of this situation. 
+
+# Question 2
+```{r echo = FALSE}
+bites_sim = do(100000)*nflip(n=50, prob = 0.03)
+ggplot(bites_sim) + geom_histogram(aes(x=nflip), binwidth=1) + ggtitle("Distribution of Health Violations Simulation") + xlab("Number of Health Violations") + ylab("count")
+bites_sum = sum(bites_sim >=8)
+bites_p = bites_sum/100000
+```
+
+The histogram above displays the distribution the number of health violations issued out of 50 inspections at a 3% probability through 100,000 monte carlo simulations. 
+
+Null hypothesis: Gourmet bites received the same frequency of health violations at a 3% chance of being flagged. 
+
+The test statistic was the number of health violations received. The p-value is 0.00016. I don't believe the null hypothesis was plausible as at all, since the probability that 8 out of 50 inspections were considered violations was 0.016% according to the simulation, this number is most likely way too low to be considered a random variation. 
+
+# Question 3
+```{r echo = FALSE}
+# part a
+frequencies = read.csv("letter_frequencies.csv")
+brown = readLines("brown_sentences.txt")
+
+calculate_chi_squared = function(sentences, frequencies) {
+
+  frequencies$Probability = frequencies$Probability / sum(frequencies$Probability)
+  
+  # Take out special cases and turn to uppercase
+  clean_sentence = gsub("[^A-Za-z]", "", sentences)
+  clean_sentence = toupper(clean_sentence)
+  
+  # Count letter frequencies
+  observed_counts = table(factor(strsplit(clean_sentence, "")[[1]], levels = frequencies$Letter))
+  
+  # Calculate expected counts
+  total_letters = sum(observed_counts)
+  expected_counts = total_letters * frequencies$Probability
+  
+  chi_squared_stat = sum((observed_counts - expected_counts)^2 / expected_counts)
+  
+  return(chi_squared_stat)
+}
+
+calculate_all_chi_squared = function(sentences, frequencies) {
+  chi_squared_results = numeric(length(sentences))
+  
+  for (i in seq_along(sentences)) {
+    chi_squared_results[i] = calculate_chi_squared(sentences[i], frequencies)
+  }
+  
+  return(chi_squared_results)
+}
+
+expected_chi = calculate_all_chi_squared(brown, frequencies)
+
+```
+
+```{r echo = FALSE}
+# part b 
+test_sentences = c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+test_chi = calculate_all_chi_squared(test_sentences, frequencies)
+
+calculate_p = function(test, expected) {
+  number_values_greater_equal = sum(expected >= test)
+  total = length(expected)
+  pvalue = number_values_greater_equal / total 
+  return(pvalue)
+}
+
+p_value_results = numeric(length(test_chi))
+  
+for (i in seq_along(test_sentences)) {
+  p_value_results[i] = calculate_p(test_chi[i], expected_chi)
+}
+
+table_part_b = tibble(
+  Sentence = 1:length(p_value_results), 
+  P_Value = round(p_value_results, 3)
+)
+
+pretty_table = kable(table_part_b, format = "html")
+pretty_table
+```
+
+
+The table above displays the p_values for each of the tested sentences when compared to the expected chi square values from the brown sentences data. 
+
+The sentence produced by a LLM should be sentence 6 because the p value for that sentence is by far the lowest out of all 10, meaning it's statistically the least likely to be written by a human. 
