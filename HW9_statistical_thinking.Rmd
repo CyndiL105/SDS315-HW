@@ -1,0 +1,109 @@
+---
+title: "HW 9"
+author: "Cyndi Liang"
+date: "2024-04-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Github Link:
+EID: 
+
+## Problem 1
+```{r echo = FALSE, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(mosaic)
+library(MatchIt)
+```
+## Part A
+```{r echo = FALSE, include = FALSE}
+turnout <- read.csv("turnout.csv")
+
+yes_gotv_1998 <- subset(turnout, voted1998 == 1 & GOTV_call == 1)
+proportion_gotv1998 <- nrow(yes_gotv_1998) / nrow(turnout)
+
+no_gotv_yes_1998 <- subset(turnout, voted1998 == 1 & GOTV_call == 0)
+proportion_no_gotv1998 <- nrow(no_gotv_yes_1998) / nrow(turnout)
+      
+turnout = mutate(turnout, yes_gotv_1998 = turnout$voted1998 == 1 & turnout$GOTV_call == 1)
+turnout = mutate(turnout, no_gotv_yes_1998 = turnout$voted1998 == 1 & turnout$GOTV_call == 0)
+
+boot_turnout = do(10000)*diffprop(yes_gotv_1998 ~ no_gotv_yes_1998, data=mosaic::resample(turnout))
+confint(boot_turnout, level = 0.95)
+```
+The proportion of those receiving a GOTV call who voted in 1998 was 0.0148. The sample proportion of those not receiving a GOTV call who voted in 1998 was 0.434. The large sample 95% confidence interval for the difference in these proportions was 0.0222 to 0.0302. 
+
+## Part B
+```{r echo = FALSE, include = FALSE}
+year1996_summary = turnout %>%
+  group_by(voted1996) %>%
+  summarize(mean_GOTV_call = mean(GOTV_call))
+
+party_summary = turnout %>%
+  group_by(MAJORPTY) %>%
+  summarize(mean_GOTV_call = mean(GOTV_call))
+```
+The voted in 1996 variable is confounding, because when a table is created with different combinations of that variable whether they got a GOTV call, the GOTV variable was 0.0141 for people who didn't vote in 1996, and 0.0304 for people who voted in 1996, which is a significant increase in numbers. 
+
+The voted in major party variable is confounding, because when a table is created with different combinations, the GOTV_call variable is 0.0178 who weren't in a party, and 0.0245 that were in a party, which is a increase in numbers. 
+
+The age variable is also shown to be confounding as age and GOTV_call variable when plotted together shows a visible positive correlation in the graph below. 
+
+```{r echo = FALSE}
+ggplot(turnout, aes(x=AGE, y=GOTV_call)) + ggtitle("Correlation between Age and GOTV_call") + xlab("Age (years)") + ylab("Whether they received a GOTV call (1 being yes)") + geom_point() + geom_smooth()
+```
+
+The table above displays the correlation between Age of voters and whether they received a GOVT call. 
+
+## Part C
+```{r echo = FALSE, include = FALSE}
+turnout_match = matchit(GOTV_call ~ AGE + voted1996 + MAJORPTY, data = turnout, ratio=5)
+turnout_matched = match.data(turnout_match)
+
+mean(AGE ~ GOTV_call, data=turnout_matched)
+mean(voted1996 ~ GOTV_call, data=turnout_matched)
+mean(MAJORPTY ~ GOTV_call, data=turnout_matched)
+```
+The matched set is balanced because the average in age groups is similar, the average in those who voted in 1996 and those who didnt is similar, and the average in those that identify or dont identify with a major political party is also similar. 
+
+```{r echo = FALSE, include = FALSE}
+yes_gotv_1998 <- subset(turnout_matched, voted1998 == 1 & GOTV_call == 1)
+proportion_gotv1998 <- nrow(yes_gotv_1998) / nrow(turnout_matched)
+
+no_gotv_yes_1998 <- subset(turnout_matched, voted1998 == 1 & GOTV_call == 0)
+proportion_no_gotv1998 <- nrow(no_gotv_yes_1998) / nrow(turnout_matched)
+      
+turnout = mutate(turnout_matched, yes_gotv_1998 = turnout_matched$voted1998 == 1 & turnout_matched$GOTV_call == 1)
+turnout = mutate(turnout_matched, no_gotv_yes_1998 = turnout_matched$voted1998 == 1 & turnout_matched$GOTV_call == 0)
+
+boot_turnout_matched = do(10000)*diffprop(yes_gotv_1998 ~ no_gotv_yes_1998, data=mosaic::resample(turnout_matched))
+confint(boot_turnout_matched, level = 0.95)
+```
+According to the matched data set, the proportion of those receiving a GOTV call who voted in 1998 was 0.108. The sample proportion of those not receiving a GOTV call who voted in 1998 was 0.478. The large sample 95% confidence interval for the difference in these proportions was 0.179 to 0.236. 
+
+The data above indicates that not receiving a GOTV call increases the likelihood of having voted in 1998, as the proportions calculated with the matched dataset has a significant difference. 
+
+## Problem 2 
+```{r echo = FALSE, include = FALSE}
+solder = read.csv("solder.csv")
+```
+
+```{r echo = FALSE}
+ggplot(solder, aes(x = skips)) + geom_histogram(stat = "count", fill = "skyblue", color = "black", bins = 20) + labs(title = "Distribution of Skips by Opening Size", x = "Number of Skips", y = "Count") + facet_wrap(~ Opening)
+```
+
+The graph above depics how the distribution of the number of skips changes when the opening size varies. Through these faceted graphs its demonstrated that as opening size increases so does the number of skips. 
+
+```{r echo = FALSE}
+ggplot(solder, aes(x = skips)) + geom_histogram(stat = "count", fill = "skyblue", color = "black", bins = 20) + labs(title = "Distribution of Skips by Solder Thickness", x = "Number of Skips", y = "Count") + facet_wrap(~ Solder)
+```
+
+The graph above depics how the distribution of the number of skips changes when the solder thickness varies. Through these faceted graphs its demonstrated that as solder thickness decreases the number of skips increases.
+
+```{r echo = FALSE}
+lm1 = lm(skips ~ Solder + Opening, data=solder)
+coef(lm1) %>% round(0)
+```
