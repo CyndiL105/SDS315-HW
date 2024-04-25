@@ -1,0 +1,123 @@
+---
+title: "HW 10 Statistical Thinking"
+author: "Cyndi Liang"
+date: "2024-02-24"
+output: html_document
+---
+
+Github Link:
+
+EID: 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(mosaic)
+library(MatchIt)
+library(moderndive)
+library(tidyverse)
+```
+
+## Problem 1: Redlining
+```{r echo = FALSE, include = FALSE}
+red = read.csv("redlining.csv")
+red = mutate(red, policy_binary = as.integer(policies != 0))
+red_match = matchit(policy_binary ~ fire + age + income, data = red, ratio=3)
+red_matched = match.data(red_match)
+
+mean(fire ~ policy_binary, data=red_matched)
+mean(age ~ policy_binary, data=red_matched)
+mean(income ~ policy_binary, data=red_matched)
+
+lm0 = lm(policies ~ minority, data=red_matched)
+coef(lm0) 
+
+cor(red_matched$policies, red_matched$minority)
+```
+
+  The question at hand is whether the percentage of minorities in an area affect the number of FAIR policy renewals in a given area. 
+  
+  Firstly I utilized the Matchit Library to match the dataset in relations to whether or not they had policy renewals and three factors: fires, age, and income. I created a new binary variable called policy_binary in order to be able ot match it. After identifying the best match ratio as well as verifying that the match was correct, I constructed a linear regression of the new matched dataset and identified the coefficient as well as found the correlation number between the policies and minority variable. A graph of the two variables was also created. 
+  
+  The graph formed with the new matched data set shows a visible positive slope of 0.0166 between the two factors. The correlation value was 0.804. 
+
+```{r echo = FALSE}
+ggplot(red_matched, aes(x=minority, y=policies)) + ggtitle("Policy renewals in relation to Minority Demographic") + xlab("Percentage minority residents (%)") + ylab("Policies (# renewals per 100 houses)") + geom_point() + geom_smooth(method="lm", formula = y ~ x, color='black')
+```
+
+The graph above displays the relation between the number of Fair plan policy renewals per 100 housing units and the percentage of minority residents. 
+
+  The graph's positive trend as well as the correlation value of 0.804 with the highest value being 1 indicates that there is a significant correlation between the two. Hence it is likely that the minority demographic in an area increases the number of FAIR policy renewals, and hence decreases the number of private insurance renewals. 
+
+## Problem 2: Grocery Store Prices 
+
+## Part A
+```{r echo = FALSE, include = FALSE}
+groceries = read.csv("groceries.csv")
+
+by_store <- groceries %>%
+  group_by(Store)
+
+average_cost_per_store <- by_store %>%
+  summarise(average_cost = mean(Price), .groups = 'drop')
+```
+
+```{r echo = FALSE}
+ggplot(average_cost_per_store, aes(x = Store, y = average_cost)) + geom_col() + labs(title = "Average Product Cost per Store", x = "Store", y = "Average Cost ($)") + theme_minimal() + coord_flip()
+```
+
+The bar graph above displays the average price of goods of each store in the groceries data set. Whole foods has the largest average price at around 3.98 dollars while fiesta has the lowest average price at around 2.05 dollars. 
+
+## Part B 
+```{r echo = FALSE, include = FALSE}
+product_stores_count <- groceries %>%
+  group_by(Product) %>%
+  summarise(num_stores = n_distinct(Store, City), .groups = 'drop')
+```
+
+```{r echo = FALSE}
+ggplot(product_stores_count, aes(x = Product, y = num_stores)) + geom_col() + labs(title = "Number of Stores selling each Product", x = "Product", y = "Number of stores available") + theme_minimal() + coord_flip()
+```
+
+The bar graph above displays each product in the groceries data set and the number of stores that sell them. A carton of eggs and horizon 2% milk seem to be the most readily available, stocked in 16 stores, while frosted flakes, tortilla chips, cinnamon toast crunch, and lucky charms seem to be found the least number of times. 
+
+## Part C
+```{r echo = FALSE, include = FALSE}
+groceries$Type <- factor(groceries$Type)
+groceries$Type <- relevel(groceries$Type, ref = "Grocery")
+
+price_model <- lm(Price ~ Product + Type, data = groceries)
+get_regression_table(price_model)
+```
+Compared with ordinary grocery stores (like Albertsons, HEB, or Krogers), convenience stores charge somewhere between 0.41 and 0.92 dollars more for the same product.”
+
+## Part D
+```{r echo = FALSE, include = FALSE}
+model <- lm(Price ~ Product + Store, data = groceries)
+get_regression_table(model)
+```
+
+Kroger fresh fare and Walmart have the most negative coefficient estimates according to the regression hence they have the lowest prices for the same product. Whole foods and Wheatsville Food Co-Op in the other hand have the two highest coefficient estimates, and hence have the highest prices for the same product. 
+
+## Part E 
+It looks like Central Market charges about the same as HEB for the same product. In the regression model that plots price against product and store, the coefficient for Central Market was -0.573 and the coefficient for HEB was -0.646. These values are somewhat similar, especially since some stores differed as much as 1.266, so in the broader scheme these are pretty close and doesnt have a big enough difference to indicate higher pricing for Central Market. 
+
+## Part F 
+```{r echo = FALSE, include = FALSE}
+groceries <- groceries %>%
+  mutate(Income10K = Income / 10000)
+
+groceries_income_model <- lm(Price ~ Product + Income10K, data = groceries)
+coef(groceries_income_model)
+get_regression_table(groceries_income_model)
+```
+
+Based on the Income10k coefficient it seems that consumers in poorer zip codes pay more for groceries since the coefficient was -0.014. This means that the regression has a downward trend, where as the income increases the price slightly decreases. 
+
+One-standard deviation increase in the income of a ZIP code seems to be associated with
+a -0.03 standard-deviation change in the price that consumers in that ZIP code expect to pay for
+the same product.
